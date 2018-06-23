@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE struts PUBLIC
+        "-//Apache Software Foundation//DTD Struts Configuration 2.3//EN"
+        "http://struts.apache.org/dtds/struts-2.3.dtd">
+
+<struts>
+    <constant name="struts.action.extension" value=",jsp"></constant>
+    <constant name="struts.action.excludePattern"
+              value="/websocket/.*,/js/.*?,/css/.*?,/video/css/.*?,/video/js/.*?,/Admin,/ServletConfigurator"/>
+    <constant name="struts.i18n.encoding" value="UTF-8"></constant>
+    <constant name="struts.serve.static.browserCache" value="false"></constant><!--缓存关闭-->
+    <constant name="struts.multipart.saveDir" value="/tmp"/>
+    <constant name="struts.multipart.maxSize" value="900000000"/><!--文件上传最大限制-->
+
+    <package name="default" namespace="/" extends="struts-default,global">
+
+        <!--默认action-->
+        <default-action-ref name="*"></default-action-ref>
+
+        <action name="homepage" class="com.action.HomeAction">
+            <result name="success">/homepage.jsp</result>
+        </action>
+
+        <action name="liveHall" class="com.action.LiveHallAction">
+            <result name="success">/live_hall.jsp</result>
+        </action>
+
+        <action name="live" class="com.action.LiveAction">
+            <result name="success">/live.jsp</result>
+            <result name="my" type="redirect">live?roomId=${myRoomId}</result>
+            <result name="hall" type="chain">liveHall</result>
+        </action>
+
+
+        <action name="*">
+            <result>{1}.jsp</result>
+        </action>
+
+    </package>
+
+
+    <package name="video" extends="default" namespace="/video">
+        <!--注册拦截器-->
+        <interceptors>
+            <interceptor name="check_video" class="com.Interceptor.Check_videoId"></interceptor>
+        </interceptors>
+
+
+        <action name="demand" class="com.action.DemandAction">
+
+            <interceptor-ref name="check_video"></interceptor-ref>
+            <interceptor-ref name="defaultStack"></interceptor-ref>
+
+            <result name="success">/video/demand.jsp</result>
+
+            <result name="re_video" type="redirectAction">
+                <param name="actionName">demand?video_id=av00000001</param>
+            </result>
+
+        </action>
+
+    </package>
+
+
+    <package name="vip" extends="default" namespace="/vip">
+
+        <!--判断登录拦截器-->
+        <interceptors>
+            <interceptor name="check_islogined" class="com.Interceptor.Check_islogined"></interceptor>
+            <interceptor-stack name="check_islogin_stack">
+                <interceptor-ref name="defaultStack"></interceptor-ref>
+                <interceptor-ref name="check_islogined"></interceptor-ref>
+            </interceptor-stack>
+        </interceptors>
+
+        <default-interceptor-ref name="check_islogin_stack"></default-interceptor-ref>
+
+        <action name="user_info" class="com.action.UserInfoAction" method="setting">
+            <result>/vip/user_info.jsp</result>
+        </action>
+
+    </package>
+
+
+    <!--ajax_json处理action-->
+    <package name="ajax_" namespace="/ajax" extends="json-default,global">
+        <action name="*_loginJsonAction" method="{1}" class="com.action.LoginAction">
+            <result name="success" type="json">
+                <param name="noCache">true</param><!--缓存关闭-->
+                <param name="root">resp_json<!-- result是action中设置的变量名，也是页面需要返回的数据，该变量必须有setter和getter方法 --></param>
+            </result>
+        </action>
+
+        <action name="*_barragesJsonAction" method="{1}" class="com.action.BarragesAction">
+            <result name="success" type="json">
+                <param name="noCache">true</param><!--缓存关闭-->
+                <param name="root">resp_json<!-- result是action中设置的变量名，也是页面需要返回的数据，该变量必须有setter和getter方法 --></param>
+            </result>
+        </action>
+
+        <action name="*_logoutJsonAction" method="{1}" class="com.action.LogoutAction">
+            <result name="success" type="json">
+                <param name="noCache">true</param><!--缓存关闭-->
+                <param name="root">resp_json<!-- result是action中设置的变量名，也是页面需要返回的数据，该变量必须有setter和getter方法 --></param>
+            </result>
+        </action>
+
+
+        <action name="registerAction" class="com.action.RegisterAction">
+            <result name="success" type="json">
+                <param name="noCache">true</param><!--缓存关闭-->
+                <param name="root">resp_json<!-- result是action中设置的变量名，也是页面需要返回的数据，该变量必须有setter和getter方法 --></param>
+            </result>
+        </action>
+
+        <action name="upload-*" class="com.action.UploadAction" method="{1}">
+
+            <param name="saveBasePath">res/</param>
+
+            <param name="imagePath">head_pic/</param>
+            <param name="videoPath">video/</param>
+            <param name="thumbnailPath">video_cover/</param>
+            <!--<param name="audioPath">audio/</param>-->
+
+            <result name="success" type="json">
+                <param name="noCache">true</param><!--缓存关闭-->
+                <param name="root">resp_json<!-- result是action中设置的变量名，也是页面需要返回的数据，该变量必须有setter和getter方法 --></param>
+            </result>
+        </action>
+
+
+        <action name="pagevideo-*" class="com.action.VideoAjax_Page" method="{1}">
+            <param name="init_pageSize">15</param>
+            <result name="success" type="json">
+                <param name="noCache">true</param><!--缓存关闭-->
+                <param name="root">resp_json<!-- result是action中设置的变量名，也是页面需要返回的数据，该变量必须有setter和getter方法 --></param>
+            </result>
+        </action>
+
+
+        <!--用户信息更新-->
+        <action name="userAjax-*" class="com.action.UserInfoAction" method="{1}">
+            <result name="success" type="json">
+                <param name="noCache">true</param><!--缓存关闭-->
+                <param name="root">resp_json<!-- result是action中设置的变量名，也是页面需要返回的数据，该变量必须有setter和getter方法 --></param>
+            </result>
+        </action>
+
+
+        <!--投稿-->
+        <action name="video_submit" class="com.action.VideoSubmitAction">
+            <result name="success" type="json">
+                <param name="noCache">true</param><!--缓存关闭-->
+                <param name="root">resp_json<!-- result是action中设置的变量名，也是页面需要返回的数据，该变量必须有setter和getter方法 --></param>
+            </result>
+        </action>
+    </package>
+
+
+    <!--全局返回结果-->
+    <package name="global" extends="struts-default" namespace="/">
+        <global-results>
+            <result name="error">
+                /error.jsp
+            </result>
+            <result name="login" type="dispatcher">
+                /not_login.jsp
+            </result>
+            <result name="404" type="dispatcher">
+                /404.jsp
+            </result>
+        </global-results>
+
+    </package>
+
+
+</struts>
